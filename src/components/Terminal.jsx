@@ -95,7 +95,7 @@ export default function Terminal({ lines, onCommand, disabled, presets }) {
             disabled={disabled}
             placeholder={
               disabled
-                ? 'operation in progress — scrub it with the stepper above'
+                ? 'operation in progress — scrub it with the stepper below'
                 : 'type a kubectl command… (or "help")'
             }
             onChange={(e) => {

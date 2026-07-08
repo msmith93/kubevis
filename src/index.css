@@ -132,23 +132,6 @@ code {
   min-height: 100%;
 }
 
-.control-plane {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--panel);
-  padding: 12px 14px;
-}
-.cp-node-head {
-  margin-bottom: 10px;
-  gap: 12px;
-}
-.cp-sub {
-  font-size: 11px;
-  color: var(--muted);
-  flex: 1;
-  text-align: right;
-  padding-right: 4px;
-}
 .head-group {
   display: flex;
   align-items: center;
@@ -176,10 +159,16 @@ code {
   white-space: nowrap;
   cursor: help;
 }
+.badge-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 9px;
+  flex-wrap: wrap;
+}
 .cp-actors {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
 .actor-box {
   background: var(--panel-2);
@@ -227,18 +216,17 @@ code {
   color: var(--muted);
 }
 
-.pending-tray {
-  margin-top: 10px;
+.pending-strip {
   border: 1px dashed var(--border);
   border-radius: 9px;
-  padding: 7px 12px;
+  padding: 6px 12px;
   display: flex;
   align-items: center;
   gap: 12px;
-  min-height: 46px;
+  min-height: 42px;
   transition: border-color 0.25s, box-shadow 0.25s;
 }
-.pending-tray.active {
+.pending-strip.active {
   border-color: var(--warn);
   box-shadow: 0 0 16px rgba(224, 160, 74, 0.25);
 }
@@ -262,7 +250,7 @@ code {
 /* ================= stage: worker nodes ================= */
 .nodes-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   flex: 1;
 }
@@ -279,6 +267,15 @@ code {
 .node-col.active {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent), 0 0 24px rgba(50, 108, 229, 0.35);
+}
+/* the control-plane node: same card as the workers, subtly tinted */
+.node-col.control-plane {
+  background: linear-gradient(
+    180deg,
+    rgba(50, 108, 229, 0.09),
+    rgba(50, 108, 229, 0.02)
+  ) var(--panel);
+  border-color: #2e3f6e;
 }
 .node-head {
   display: flex;

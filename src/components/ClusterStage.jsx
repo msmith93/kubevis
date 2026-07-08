@@ -13,74 +13,74 @@ export default function ClusterStage({ cluster, extra }) {
   const flights = extra.flights ?? []
   const pods = Object.values(cluster.pods)
   const pendingPods = pods.filter((p) => !p.node)
+  const cpActive = ['apiserver', 'etcd', 'scheduler', 'controller'].some((id) =>
+    focus.has(id),
+  )
 
   return (
     <div className="stage">
-      <div className="control-plane">
-        <div className="node-head cp-node-head">
-          <span className="head-group">
-            <span className="node-name">control-plane</span>
-            <span className="role-badge">node</span>
+      <div
+        className={'pending-strip' + (focus.has('tray') ? ' active' : '')}
+        data-fly="tray"
+      >
+        <span className="tray-label">
+          Pending pods · exist only as API objects, no node assigned
+        </span>
+        <div className="tray-chips">
+          <AnimatePresence mode="popLayout">
+            {pendingPods.length === 0 && <span className="empty-note">none</span>}
+            {pendingPods.map((p) => (
+              <PodChip key={p.name} pod={p} />
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      <div className="nodes-row">
+        <div className={'node-col control-plane' + (cpActive ? ' active' : '')}>
+          <div className="node-head">
+            <span className="head-group">
+              <span className="node-name">control-plane</span>
+            </span>
+            <span className="kubelet-badge">kubelet</span>
+          </div>
+          <div className="badge-row">
+            <span className="role-badge">control plane</span>
             <span
               className="taint-badge"
               title="node-role.kubernetes.io/control-plane:NoSchedule — the scheduler filters this node out for user workloads"
             >
               taint: NoSchedule
             </span>
-          </span>
-          <span className="cp-sub">
-            the control plane runs ON a node — these are static pods managed by
-            its kubelet
-          </span>
-          <span className="kubelet-badge">kubelet</span>
-        </div>
-        <div className="cp-actors">
-          <ActorBox
-            id="apiserver"
-            label="kube-apiserver"
-            sub="the only front door"
-            active={focus.has('apiserver')}
-          />
-          <ActorBox
-            id="etcd"
-            label="etcd"
-            sub="state of record"
-            active={focus.has('etcd')}
-          />
-          <ActorBox
-            id="scheduler"
-            label="kube-scheduler"
-            sub="binds pods to nodes"
-            active={focus.has('scheduler')}
-          />
-          <ActorBox
-            id="controller"
-            label="controller-manager"
-            sub="reconciliation loops"
-            active={focus.has('controller')}
-          />
-        </div>
-        <div
-          className={'pending-tray' + (focus.has('tray') ? ' active' : '')}
-          data-fly="tray"
-        >
-          <span className="tray-label">
-            Pending pods · exist only as API objects, no node assigned
-          </span>
-          <div className="tray-chips">
-            <AnimatePresence mode="popLayout">
-              {pendingPods.length === 0 && (
-                <span className="empty-note">none</span>
-              )}
-              {pendingPods.map((p) => (
-                <PodChip key={p.name} pod={p} />
-              ))}
-            </AnimatePresence>
+          </div>
+          <div className="cp-actors">
+            <ActorBox
+              id="apiserver"
+              label="kube-apiserver"
+              sub="the only front door"
+              active={focus.has('apiserver')}
+            />
+            <ActorBox
+              id="etcd"
+              label="etcd"
+              sub="state of record"
+              active={focus.has('etcd')}
+            />
+            <ActorBox
+              id="scheduler"
+              label="kube-scheduler"
+              sub="binds pods to nodes"
+              active={focus.has('scheduler')}
+            />
+            <ActorBox
+              id="controller"
+              label="controller-manager"
+              sub="reconciliation loops"
+              active={focus.has('controller')}
+            />
           </div>
         </div>
-      </div>
 
-      <div className="nodes-row">
         {WORKER_NODES.map((w) => (
           <NodeCol
             key={w.id}

@@ -240,6 +240,13 @@ export default function App() {
         <SidePanel cluster={life.derived} op={life.op} />
       </div>
 
+      <Terminal
+        lines={lines}
+        onCommand={handleCommand}
+        disabled={!life.canStartNew}
+        presets={presets}
+      />
+
       <Stepper
         steps={life.op ? stepsFor(life.op.type) : []}
         step={life.op?.step ?? 0}
@@ -249,13 +256,6 @@ export default function App() {
         onNext={() => life.step(1)}
         onPlay={life.play}
         onPause={life.pause}
-      />
-
-      <Terminal
-        lines={lines}
-        onCommand={handleCommand}
-        disabled={!life.canStartNew}
-        presets={presets}
       />
     </div>
   )

@@ -26,8 +26,11 @@ op)`, per-op step modules, one timing file, Framer Motion chip flights.
   (kubeadm-style stacked topology): **kube-apiserver**, **etcd**,
   **kube-scheduler**, **kube-controller-manager**. It carries the
   `node-role.kubernetes.io/control-plane:NoSchedule` taint, so user workloads
-  never land on it. The stage also shows a tray for unscheduled (Pending,
-  unbound) pods, which exist only as API objects.
+  never land on it — dedicated, workload-free control-plane nodes are the
+  production norm for self-hosted clusters, and the stage depicts that. It is
+  drawn in the SAME row as the workers: it's just a node with a different
+  role. The stage also shows a strip for unscheduled (Pending, unbound) pods,
+  which exist only as API objects and sit on no node.
 - **3 worker nodes** (`node-1..3`), each with a kubelet badge and a stack of
   pod chips. Capacity capped at 4 pods per node (demo-size limit).
 - Single `default` namespace; workloads are Deployments only.
@@ -104,12 +107,14 @@ the terminal. Read-only ops have no `derive` and never fold into state.
 
 ## UI layout
 - Top: title bar + Reset cluster.
-- Center: the stage — control plane (4 actor boxes + unscheduled-pod tray)
-  above 3 worker-node columns. Highlights and chip flights follow the active
-  op step.
+- Center: the stage — a slim full-width strip for Pending (unscheduled) pods,
+  then ONE row of four node columns: the control-plane node first (tinted,
+  with its static-pod actor boxes stacked inside), then the 3 workers.
+  Highlights and chip flights follow the active op step.
 - Right: explanation panel + etcd desired-state tree + event stream.
-- Bottom: stepper (op label, Prev / Next / Play / Pause, step pips), then the
-  terminal (presets row, scrollback, prompt with ↑/↓ history).
+- Bottom: the terminal (presets row, scrollback, prompt with ↑/↓ history),
+  then the stepper (op label, Prev / Next / Play / Pause, step pips) at the
+  very bottom.
 
 ## Deliverable for this POC
 - Working `npm run dev` Vite app.
