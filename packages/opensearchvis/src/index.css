@@ -917,8 +917,35 @@ table.ii td.term {
   color: var(--muted);
   font-weight: 400;
 }
-.si-close {
+.si-close-wrap {
   margin-left: auto;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.si-close-hint {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--panel-2);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 4px 9px;
+  white-space: nowrap;
+  animation: hint-fade-in 0.3s ease-out;
+}
+@keyframes hint-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.si-close {
   flex: none;
   width: 26px;
   height: 26px;

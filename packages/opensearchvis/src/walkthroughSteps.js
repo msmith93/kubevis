@@ -77,15 +77,15 @@ export const TOUR_STEPS = [
   },
   {
     id: 'stepper',
-    target: '[data-tour="stepper"]',
+    target: '[data-tour="stepper-play"]',
     placement: 'top',
     title: 'Run the search to the end',
-    body: 'The search is still paused mid-flight. Press ▶ Play to let it run — or step through with ‹ Prev and Next › — and watch it gather every shard’s hits, merge and sort them, fetch the winning documents, and return the ranked results.',
-    // Hidden while the shard inspector is open so it never covers the close-up.
-    // The stepper stays usable inside the spotlight hole. Advances only once the
-    // search animation has actually reached its final step, so the tour can't end
-    // with the scatter-gather still frozen. "Skip tour" in the tooltip is the
-    // escape hatch for anyone who wants out early.
+    body: 'The search is still paused mid-flight. Press ▶ Play right here to let it run to the end — watch it gather every shard’s hits, merge and sort them, fetch the winning documents, and return the ranked results.',
+    // Spotlights the footer ▶ Play button directly so the tooltip sits right next
+    // to it. Hidden while the shard inspector is open so it never covers the
+    // close-up. Advances only once the search animation reaches its final step,
+    // so the tour can't end with the scatter-gather still frozen. "Skip tour" in
+    // the tooltip is the escape hatch for anyone who wants out early.
     waitFor: (s) => s.zoomShard == null,
     advanceOn: (s) => s.opType === 'search' && s.opDone && !s.playing,
   },

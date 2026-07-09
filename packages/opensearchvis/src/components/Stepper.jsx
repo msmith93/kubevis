@@ -31,6 +31,7 @@ export default function Stepper({
         ) : (
           <button
             className={'btn' + (highlightPlay ? ' tour-pulse' : '')}
+            data-tour={dataTour ? dataTour + '-play' : undefined}
             onClick={onPlay}
             disabled={!active || atEnd}
           >

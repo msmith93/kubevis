@@ -210,13 +210,18 @@ function InspectorBody({ shard, search, docs, query, onClose, highlightClose }) 
           <span className={'role-badge ' + sv.role}>{sv.role}</span> on {sv.node}
           <span className="si-sub"> — local search</span>
         </div>
-        <button
-          className={'si-close' + (highlightClose ? ' tour-pulse' : '')}
-          onClick={onClose}
-          title="Close"
-        >
-          ✕
-        </button>
+        <div className="si-close-wrap">
+          {highlightClose && step >= last && (
+            <span className="si-close-hint">Done exploring? Click ✕ to exit →</span>
+          )}
+          <button
+            className={'si-close' + (highlightClose ? ' tour-pulse' : '')}
+            onClick={onClose}
+            title="Close"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       <div className="si-explain">
