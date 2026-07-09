@@ -25,6 +25,6 @@ export const POD_APPEAR_DELAY_S = 0.45
 // One request per tick; each hop of the request chip takes REQ_HOP_S, and a
 // flight record lives REQ_FLIGHT_TTL_MS before being pruned. TTL must cover
 // the longest flight (4 hops out + return) so chips are never cut short.
-export const TRAFFIC_TICK_MS = 1000
+export const TRAFFIC_TICK_MS = 5000
 export const REQ_HOP_S = 0.3
 export const REQ_FLIGHT_TTL_MS = 2600

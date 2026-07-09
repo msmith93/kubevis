@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { routeRequest } from './cluster'
 import { TRAFFIC_TICK_MS, REQ_FLIGHT_TTL_MS } from './timing'
 
-// The ambient traffic layer: a synthetic user fires one request per second,
-// entirely OUTSIDE the op machinery. Each tick evaluates routeRequest against
+// The ambient traffic layer: a synthetic user fires one request every
+// TRAFFIC_TICK_MS, entirely OUTSIDE the op machinery. Each tick evaluates routeRequest against
 // the currently RENDERED (derived) cluster — so traffic reacts live to mid-op
 // states and stepper scrubbing (pods that are ContainerCreating don't serve;
 // drain a node mid-walk and watch outcomes change). Flights are decorative

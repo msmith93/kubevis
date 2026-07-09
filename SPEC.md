@@ -137,7 +137,10 @@ Ingress objects and programs the route. Deleting the Service (503) or the
 Ingress (404) breaks a different link — the rail shows which.
 
 ### The traffic rail (ambient, outside the op machinery)
-A synthetic user fires one request per second, always on (pausable). Each
+A synthetic user fires one request every 5 seconds, always on (pausable).
+The rail is grid-aligned over the WORKER columns only — user traffic is the
+data plane and must never appear to pass through the control plane; the
+column above the control-plane card holds a note saying exactly that. Each
 tick traces routeRequest against the currently RENDERED cluster: ingress
 rule → Service → ready endpoint (round-robin), so traffic reacts live to
 mid-op states, scrubbing, drains, and crashes. Failures die at the first

@@ -48,8 +48,8 @@ help · clear
 
 ### Serve real (fake) traffic
 
-A synthetic user sends one request per second through the ingress controller
-— failing with 404s until you build the serving chain:
+A synthetic user sends a request every 5 seconds through the ingress
+controller — failing with 404s until you build the serving chain:
 
 ```
 kubectl create deployment web --image=nginx --replicas=3

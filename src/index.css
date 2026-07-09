@@ -155,11 +155,34 @@ code {
 }
 
 /* ================= traffic rail ================= */
+/* Mirrors .nodes-row's 4-column grid: column 1 (above the control-plane
+   card) holds only an explanatory note, so the user/ingress/service boxes —
+   and every request-chip hop — sit strictly over the WORKER columns. The
+   data plane visually bypasses the control plane. */
 .traffic-rail {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.rail-note {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: 9px;
+  padding: 8px 10px;
+  align-self: stretch;
+}
+.rail-note b {
+  color: var(--accent-soft);
+  font-weight: 600;
+}
+.rail-flow {
+  grid-column: 2 / -1;
   display: flex;
   align-items: stretch;
   gap: 8px;
-  margin-bottom: 12px;
   flex-wrap: wrap;
 }
 .rail-box {

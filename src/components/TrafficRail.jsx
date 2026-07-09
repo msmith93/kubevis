@@ -12,6 +12,14 @@ export default function TrafficRail({ cluster, traffic, focus }) {
 
   return (
     <div className="traffic-rail">
+      {/* Column 1 sits above the control-plane card and stays EMPTY of
+          traffic on purpose: user requests are data plane and never pass
+          through the control plane. */}
+      <div className="rail-note">
+        user traffic is the <b>data plane</b> — it never passes through the
+        control plane below
+      </div>
+      <div className="rail-flow">
       <div
         className={'rail-box rail-user' + (focus.has('user') ? ' active' : '')}
         data-fly="user"
@@ -86,11 +94,12 @@ export default function TrafficRail({ cluster, traffic, focus }) {
 
       <button
         className="btn rail-pause"
-        title={paused ? 'resume the 1 req/s synthetic user' : 'pause traffic'}
+        title={paused ? 'resume the synthetic user (1 request / 5s)' : 'pause traffic'}
         onClick={() => setPaused(!paused)}
       >
         {paused ? '▶' : '❚❚'}
       </button>
+      </div>
     </div>
   )
 }
