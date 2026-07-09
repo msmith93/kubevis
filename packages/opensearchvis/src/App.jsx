@@ -60,6 +60,11 @@ export default function App() {
   const [body, setBody] = useState(PRESETS[0].body)
   const [query, setQuery] = useState(EXAMPLE_QUERIES[0])
 
+  // Flips true when the sample dataset is seeded, so the guided tour can detect
+  // the "Load sample docs" click and advance rather than treating it as an
+  // off-script action. Cleared on Reset.
+  const [sampleLoaded, setSampleLoaded] = useState(false)
+
   // Analytics (GA4) — banner is only shown to users in GDPR regions
   const [showCookieBanner, setShowCookieBanner] = useState(false)
 
@@ -78,6 +83,7 @@ export default function App() {
       playing,
       opDone,
       zoomShard,
+      sampleLoaded,
     },
     { pause },
   )
@@ -227,7 +233,9 @@ export default function App() {
   // shard. This gives a zoomed shard several docs across multiple segments so the
   // close-up's scoring + priority-queue steps have something to show.
   function loadSampleDocs() {
-    tour.abort() // leaving the scripted path — end the tour gracefully
+    // When the tour is scripting this click, let it advance (via sampleLoaded)
+    // instead of aborting; only end the tour if this is an off-script action.
+    if (tour.step?.id !== 'load-sample') tour.abort()
     const c = initialCluster()
     const byShard = Object.fromEntries(SHARD_PLACEMENT.map((p) => [p.id, []]))
     // Tombstone one doc so the close-up's deletes (live-docs) bitset isn't trivial.
@@ -262,6 +270,7 @@ export default function App() {
     resetTo(c)
     setIndexPhase('closed')
     setZoomShard(null)
+    setSampleLoaded(true)
     docNum.current = SAMPLE_DOCS.length + 1
     segNum.current = seg
   }
@@ -270,6 +279,7 @@ export default function App() {
     tour.abort() // leaving the scripted path — end the tour gracefully
     resetTo(initialCluster())
     setIndexPhase('closed')
+    setSampleLoaded(false)
     docNum.current = 1
     segNum.current = 1
   }
@@ -333,7 +343,12 @@ export default function App() {
             </button>
           )}
 
-          <button className="btn block" style={{ marginTop: 8 }} onClick={loadSampleDocs}>
+          <button
+            className="btn block"
+            data-tour="load-sample"
+            style={{ marginTop: 8 }}
+            onClick={loadSampleDocs}
+          >
             Load sample docs
           </button>
 

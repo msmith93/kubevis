@@ -45,12 +45,21 @@ export const TOUR_STEPS = [
     advanceOn: (s) => s.opType === 'refresh',
   },
   {
+    id: 'load-sample',
+    target: '[data-tour="load-sample"]',
+    placement: 'right',
+    title: 'Load a richer dataset',
+    body: 'A single document makes for a lonely search. Click “Load sample docs” to seed a realistic cluster — about a dozen documents routed and replicated across all three shards — so the search you run next has something interesting to rank.',
+    waitFor: (s) => s.opType === 'refresh' && s.opDone && !s.playing,
+    advanceOn: (s) => s.sampleLoaded,
+  },
+  {
     id: 'search',
     target: '[data-tour="search-area"]',
     placement: 'right',
-    title: 'Now search for it',
+    title: 'Now search across them',
     body: 'Keep the suggested query, pick a chip, or type your own words — then hit “Search” to watch the coordinator scatter the query to every shard and gather a ranked response.',
-    waitFor: (s) => s.opType === 'refresh' && s.opDone && !s.playing,
+    waitFor: (s) => s.sampleLoaded && !s.playing,
     advanceOn: (s) => s.opType === 'search',
   },
   {
@@ -63,30 +72,34 @@ export const TOUR_STEPS = [
     // presses ▶ Play instead of clicking the magnifier.
     waitFor: (s) => s.opType === 'search' && s.opStep === 2,
     onShow: (s, actions) => actions.pause(),
-    body: 'The search is paused mid-flight: each serving shard is running its own local search right now. Click the highlighted 🔍 — that shard holds your document — for a granular, step-by-step view inside it.',
+    body: 'The search is paused mid-flight: each serving shard is running its own local search right now. Click the highlighted 🔍 — that shard holds several of the matching documents — for a granular, step-by-step view inside it.',
     advanceOn: (s) => s.zoomShard != null || (s.opDone && !s.playing),
   },
   {
     id: 'stepper',
     target: '[data-tour="stepper"]',
     placement: 'top',
-    title: 'Scrub the timeline',
-    body: 'Every operation is a step-by-step timeline. Use ‹ Prev and Next › in the footer to move through the paused search at your own pace, or press ▶ Play to let it run — try it now if you like.',
+    title: 'Run the search to the end',
+    body: 'The search is still paused mid-flight. Press ▶ Play to let it run — or step through with ‹ Prev and Next › — and watch it gather every shard’s hits, merge and sort them, fetch the winning documents, and return the ranked results.',
     // Hidden while the shard inspector is open so it never covers the close-up.
-    // Purely manual: the stepper stays usable inside the spotlight hole, and
-    // "Got it" moves on whenever the user is ready.
+    // The stepper stays usable inside the spotlight hole. Advances only once the
+    // search animation has actually reached its final step, so the tour can't end
+    // with the scatter-gather still frozen. "Skip tour" in the tooltip is the
+    // escape hatch for anyone who wants out early.
     waitFor: (s) => s.zoomShard == null,
-    cta: 'Got it',
+    advanceOn: (s) => s.opType === 'search' && s.opDone && !s.playing,
   },
   {
     id: 'finish',
     target: null,
     title: 'That’s the loop!',
     body: [
-      'You indexed a document, made it searchable with a refresh, and ran a scatter-gather search — and you can replay any operation from the footer.',
+      'You indexed a document, made it searchable with a refresh, loaded a fuller sample dataset, and ran a scatter-gather search to completion — and you can replay any operation from the footer.',
       'Remember: the 🔍 appears whenever a shard is serving a search — click it any time for the granular view. Try Flush, Merge, and deleting documents next.',
     ],
-    waitFor: (s) => s.zoomShard == null,
+    // Belt-and-suspenders: never surface the end card until the search animation
+    // has fully completed (and the inspector is closed).
+    waitFor: (s) => s.zoomShard == null && s.opType === 'search' && s.opDone,
     cta: 'Done',
   },
 ]
