@@ -160,19 +160,17 @@ code {
 }
 
 /* ================= traffic rail ================= */
-/* Mirrors .nodes-row's 4-column grid: column 1 holds the vertical data-plane
-   stack (RPS slider, user, ingress controller, services); columns 2-4 stay
-   empty as airspace for the request chips and aggregate beams flying from
-   the stack to the worker columns — the data plane never overlaps the
-   control-plane card below. */
+/* The vertical data-plane stack (RPS slider, user, ingress controller,
+   services) centers above the node row below it, so request chips and
+   aggregate beams fan out symmetrically to the worker columns on either
+   side — the data plane still never overlaps the control-plane card. */
 .traffic-rail {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  display: flex;
+  justify-content: center;
   margin-bottom: 12px;
 }
 .rail-stack {
-  grid-column: 1;
+  width: 260px;
   display: flex;
   flex-direction: column;
   gap: 4px;
