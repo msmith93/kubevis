@@ -13,7 +13,6 @@ import { TRAFFIC_TICK_MS } from '../timing'
 
 const bottomC = (r) => r && { x: r.left + r.width / 2, y: r.bottom }
 const topC = (r) => r && { x: r.left + r.width / 2, y: r.top }
-const rightC = (r) => r && { x: r.right, y: r.top + r.height / 2 }
 
 function Beam({ from, to, rps, fail, label }) {
   if (!from || !to || rps <= 0) return null
@@ -106,7 +105,7 @@ export default function TrafficBeams({ cluster, rps, podLoads }) {
       {Object.entries(nodeShares).map(([nodeId, share]) => (
         <Beam
           key={nodeId}
-          from={rightC(svc)}
+          from={bottomC(svc)}
           to={topC(selectorRect(`[data-fly="${nodeId}"]`))}
           rps={share}
         />

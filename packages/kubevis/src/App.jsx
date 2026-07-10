@@ -574,12 +574,14 @@ export default function App() {
 
       <div className="main">
         <div className="stage-col">
-          <ScenarioBar scenarios={scenarios} disabled={!life.canStartNew} />
-          <TrafficRail
-            cluster={life.derived}
-            traffic={traffic}
-            focus={new Set(life.extra.focus ?? [])}
-          />
+          <div className="stage-top">
+            <ScenarioBar scenarios={scenarios} disabled={!life.canStartNew} />
+            <TrafficRail
+              cluster={life.derived}
+              traffic={traffic}
+              focus={new Set(life.extra.focus ?? [])}
+            />
+          </div>
           <ClusterStage
             cluster={life.derived}
             extra={life.extra}
