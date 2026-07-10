@@ -21,6 +21,7 @@ import ScenarioBar from './components/ScenarioBar'
 import SidePanel from './components/SidePanel'
 import Stepper from './components/Stepper'
 import Terminal from './components/Terminal'
+import TrafficBeams from './components/TrafficBeams'
 import TrafficRail from './components/TrafficRail'
 import Walkthrough from './components/Walkthrough'
 
@@ -74,7 +75,10 @@ export default function App() {
   // capture their values at start-time so scrubbing never regenerates names.
   const seq = useRef({ line: 0, op: 0, name: 0, dep: 0, svc: 1 })
   const printed = useRef(new Set())
-  const traffic = useTraffic(life.derived)
+  const traffic = useTraffic(life.derived, {
+    commit: life.commit,
+    canStartNew: life.canStartNew,
+  })
 
   // First-run guided tour. Predicates read the DERIVED cluster (base is null
   // mid-walk) so steps track the rendered state.
@@ -576,10 +580,21 @@ export default function App() {
             traffic={traffic}
             focus={new Set(life.extra.focus ?? [])}
           />
-          <ClusterStage cluster={life.derived} extra={life.extra} />
+          <ClusterStage
+            cluster={life.derived}
+            extra={life.extra}
+            podLoads={traffic.mode === 'aggregate' ? traffic.podLoads : {}}
+          />
           {traffic.flights.map((f) => (
             <RequestFlight key={f.id} flight={f} />
           ))}
+          {traffic.mode === 'aggregate' && (
+            <TrafficBeams
+              cluster={life.derived}
+              rps={traffic.rps}
+              podLoads={traffic.podLoads}
+            />
+          )}
         </div>
         <SidePanel cluster={life.derived} op={life.op} />
       </div>

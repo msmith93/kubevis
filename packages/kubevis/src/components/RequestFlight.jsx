@@ -3,10 +3,12 @@ import { rectCenter, selectorRect } from './ChipFlight'
 import { REQ_HOP_S } from '../timing'
 
 // One synthetic HTTP request, animated hop by hop along the serving chain:
-// user → ingress → service chip → the endpoint pod's node, then a green
-// response chip returns straight to the user. Failures travel as far as the
-// chain exists and die at the failing hop with the status code. Purely
-// decorative — outcomes were decided by routeRequest in useTraffic.
+// down the data-plane stack (user → ingress → service chip) then across to
+// the endpoint pod's node, with a green response chip returning straight to
+// the user. Failures travel as far as the chain exists and die at the failing
+// hop with the status code. Purely decorative — outcomes were decided by
+// routeRequest in useTraffic, and individual chips only fly in 'chips' mode
+// (rps ≤ 1); aggregate rates render as TrafficBeams instead.
 export default function RequestFlight({ flight }) {
   const hops = [rectCenter(selectorRect('[data-fly="user"]'))]
   let fail = null

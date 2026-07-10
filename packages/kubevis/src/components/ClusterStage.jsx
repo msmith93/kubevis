@@ -1,6 +1,7 @@
 import { forwardRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { WORKER_NODES } from '../cluster'
+import { POD_CAPACITY_RPS } from '../constants'
 import { POD_APPEAR_DELAY_S } from '../timing'
 import ChipFlight from './ChipFlight'
 
@@ -11,7 +12,7 @@ import ChipFlight from './ChipFlight'
 // Highlights and chip flights are driven entirely by the current op's
 // extra() — the derived cluster is the single source of what exists; extra
 // says what glows and what flies.
-export default function ClusterStage({ cluster, extra }) {
+export default function ClusterStage({ cluster, extra, podLoads = {} }) {
   const focus = new Set(extra.focus ?? [])
   const flights = extra.flights ?? []
   const pods = Object.values(cluster.pods)
@@ -79,6 +80,7 @@ export default function ClusterStage({ cluster, extra }) {
             node={w}
             state={cluster.nodes[w.id]}
             pods={pods.filter((p) => p.node === w.id)}
+            podLoads={podLoads}
             active={focus.has(w.id)}
             kubeletActive={focus.has(`kubelet:${w.id}`)}
           />
@@ -119,7 +121,7 @@ function ActorBox({ id, label, sub, active, pill, pillTitle }) {
   )
 }
 
-function NodeCol({ node, state, pods, active, kubeletActive }) {
+function NodeCol({ node, state, pods, podLoads, active, kubeletActive }) {
   const down = state && !state.ready
   return (
     <div
@@ -155,7 +157,7 @@ function NodeCol({ node, state, pods, active, kubeletActive }) {
         <AnimatePresence mode="popLayout">
           {pods.length === 0 && <span className="empty-note">no pods</span>}
           {pods.map((p) => (
-            <PodChip key={p.name} pod={p} />
+            <PodChip key={p.name} pod={p} load={podLoads[p.name]} />
           ))}
         </AnimatePresence>
       </div>
@@ -166,7 +168,9 @@ function NodeCol({ node, state, pods, active, kubeletActive }) {
 // One pod. Appears with a small delay so a chip seems to materialize as the
 // flight that "delivered" it lands (see POD_APPEAR_DELAY_S). forwardRef
 // because AnimatePresence popLayout measures exiting children via ref.
-const PodChip = forwardRef(function PodChip({ pod }, ref) {
+// `load` is the pod's live request share (aggregate traffic mode only) —
+// rendered as an r/s badge that heats up toward POD_CAPACITY_RPS.
+const PodChip = forwardRef(function PodChip({ pod, load }, ref) {
   return (
     <motion.div
       ref={ref}
@@ -188,6 +192,21 @@ const PodChip = forwardRef(function PodChip({ pod }, ref) {
         <span className="phase-dot" />
         {pod.phase}
         {pod.phase === 'ContainerCreating' && <span className="pulling"> · pulling {pod.image}</span>}
+        {load != null && (
+          <span
+            className={
+              'pod-load' +
+              (load > POD_CAPACITY_RPS
+                ? ' hot'
+                : load > 0.7 * POD_CAPACITY_RPS
+                  ? ' warm'
+                  : '')
+            }
+            title={`serving ${Math.round(load)} of ${POD_CAPACITY_RPS} r/s capacity`}
+          >
+            {Math.round(load)} r/s
+          </span>
+        )}
       </span>
     </motion.div>
   )

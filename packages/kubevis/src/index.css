@@ -160,35 +160,60 @@ code {
 }
 
 /* ================= traffic rail ================= */
-/* Mirrors .nodes-row's 4-column grid: column 1 (above the control-plane
-   card) holds only an explanatory note, so the user/ingress/service boxes —
-   and every request-chip hop — sit strictly over the WORKER columns. The
-   data plane visually bypasses the control plane. */
+/* Mirrors .nodes-row's 4-column grid: column 1 holds the vertical data-plane
+   stack (RPS slider, user, ingress controller, services); columns 2-4 stay
+   empty as airspace for the request chips and aggregate beams flying from
+   the stack to the worker columns — the data plane never overlaps the
+   control-plane card below. */
 .traffic-rail {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   margin-bottom: 12px;
 }
-.rail-note {
-  font-size: 10.5px;
-  line-height: 1.45;
-  color: var(--muted);
-  border: 1px dashed var(--border);
-  border-radius: 9px;
-  padding: 8px 10px;
-  align-self: stretch;
-}
-.rail-note b {
-  color: var(--accent-soft);
-  font-weight: 600;
-}
-.rail-flow {
-  grid-column: 2 / -1;
+.rail-stack {
+  grid-column: 1;
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
+  gap: 4px;
+}
+.rail-controls {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+.rail-caption {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  cursor: help;
+  white-space: nowrap;
+}
+.rps-slider {
+  flex: 1;
+  min-width: 70px;
+  accent-color: var(--accent);
+}
+.rps-value {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--accent-soft);
+  min-width: 52px;
+  text-align: right;
+  white-space: nowrap;
+}
+.rate-pair {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+.rate-ok {
+  color: var(--good);
+}
+.rate-fail {
+  color: var(--danger);
 }
 .rail-box {
   border: 1px solid var(--border);
@@ -231,6 +256,10 @@ code {
   color: var(--muted);
   font-size: 14px;
 }
+.rail-arrow.down {
+  font-size: 12px;
+  line-height: 1;
+}
 .rail-empty {
   border-style: dashed;
 }
@@ -248,10 +277,33 @@ code {
 .counts {
   white-space: nowrap;
 }
-.rail-pause {
-  align-self: center;
-  padding: 4px 10px;
-  font-size: 11px;
+/* aggregate flow beams (TrafficBeams, rps > 1) — under the chip layer (60) */
+.beam-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.beam {
+  stroke: var(--accent-soft);
+  stroke-dasharray: 7 11;
+  stroke-linecap: round;
+  animation: beam-flow var(--beam-dur, 1s) linear infinite;
+}
+.beam.fail {
+  stroke: var(--danger);
+  animation-duration: 1.4s;
+}
+@keyframes beam-flow {
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+.beam-label {
+  fill: var(--danger);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
 }
 
 /* synthetic request chips (RequestFlight) */
@@ -565,6 +617,25 @@ code {
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* live request-share badge (aggregate traffic mode) */
+.pod-load {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--good);
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0 5px;
+  flex-shrink: 0;
+  cursor: help;
+}
+.pod-load.warm {
+  color: var(--warn);
+}
+.pod-load.hot {
+  color: var(--danger);
+  animation: pulse 0.9s ease-in-out infinite;
 }
 @keyframes pulse {
   0%,

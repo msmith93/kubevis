@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { cloneCluster } from './cluster'
 import { applyOp, deriveCluster, lastStep, opExtra, stepDuration } from './ops'
 
 // The op lifecycle state machine: the committed cluster, the active op, the
@@ -49,9 +50,11 @@ export function useOpLifecycle(makeInitialCluster) {
 
   // Fold the previous (finished) op into committed state, then begin the new
   // op at step 0 under auto-play. This "fold before next" is why a completed
-  // op can stay rendered without ever being applied twice.
+  // op can stay rendered without ever being applied twice. The functional
+  // update (rather than committing the render-captured `base`) keeps a traffic
+  // commit that lands in the same frame from being clobbered.
   function start(type, payload) {
-    setCluster(base)
+    setCluster((c) => (op && opDone ? applyOp(c, op) : c))
     setOp({ type, step: 0, payload })
     setOpDone(false)
     setPlaying(true)
@@ -69,6 +72,20 @@ export function useOpLifecycle(makeInitialCluster) {
 
   const play = () => setPlaying(true)
   const pause = () => setPlaying(false)
+
+  // Sanctioned side-channel for the ambient traffic layer: mutate the
+  // COMMITTED cluster outside the op machinery (overload crashes, kubelet
+  // restarts). The mutator receives a clone and must REPLACE objects (spread),
+  // never mutate them — the same contract as derive(). `derived` re-derives
+  // from (cluster, op) on the next render, so a mid-walk op replays cleanly
+  // on top of whatever was committed here.
+  function commit(mutator) {
+    setCluster((c) => {
+      const next = cloneCluster(c)
+      mutator(next)
+      return next
+    })
+  }
 
   // Replace the committed cluster wholesale (reset) and clear the op state so
   // nothing re-derives against the new cluster.
@@ -92,6 +109,7 @@ export function useOpLifecycle(makeInitialCluster) {
     step,
     play,
     pause,
+    commit,
     resetTo,
   }
 }

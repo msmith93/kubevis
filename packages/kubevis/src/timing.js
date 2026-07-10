@@ -22,9 +22,11 @@ export const FLIGHT_PAD_MS = 550
 export const POD_APPEAR_DELAY_S = 0.45
 
 // ---- Synthetic user traffic (useTraffic + RequestFlight) -------------------
-// One request per tick; each hop of the request chip takes REQ_HOP_S, and a
-// flight record lives REQ_FLIGHT_TTL_MS before being pruned. TTL must cover
-// the longest flight (4 hops out + return) so chips are never cut short.
-export const TRAFFIC_TICK_MS = 5000
+// The traffic loop ticks at a fixed cadence and accumulates fractional
+// requests (rps × dt) per tick — the request period is 1000/rps, not the tick.
+// Each hop of a request chip takes REQ_HOP_S, and a flight record lives
+// REQ_FLIGHT_TTL_MS before being pruned. TTL must cover the longest flight
+// (4 hops out + return) so chips are never cut short.
+export const TRAFFIC_TICK_MS = 250
 export const REQ_HOP_S = 0.3
 export const REQ_FLIGHT_TTL_MS = 2600

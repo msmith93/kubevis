@@ -108,11 +108,21 @@ operation forwards and backwards.
   `TrafficRail` + `RequestFlight` (the serving chain UI).
 
 - **Traffic** (`src/useTraffic.js`) is an ambient layer OUTSIDE the op
-  machinery: a 1 Hz ticker evaluates `routeRequest(derived)` (in
-  `src/cluster.js` — ingress rule → Service → ready endpoints, first missing
-  hop wins: 404/503) against the currently rendered cluster, so requests
-  react to mid-op states and scrubbing. Flights are decorative, pruned
-  records; stats/ticker on the rail are the substance. `services` and
-  `ingresses` live in cluster state; `serviceEndpoints` counts only Running
-  pods. Framer Motion drives stage animations; `PodChip` is
-  `forwardRef` because `AnimatePresence popLayout` measures exiting children.
+  machinery: a 250ms tick accumulates fractional requests at the
+  slider-selected rate (RPS_STEPS, 0–100 r/s) and evaluates
+  `routeRequest(derived)` (in `src/cluster.js` — ingress rule → Service →
+  ready endpoints, first missing hop wins: 404/503) against the currently
+  rendered cluster, so requests react to mid-op states and scrubbing. At
+  rps ≤ 1 each request is a decorative `RequestFlight` chip; above that
+  `TrafficBeams` draws aggregate flow beams and pods get live `r/s` badges.
+  Pods have a POD_CAPACITY_RPS (20) serving limit — sustained overload
+  OOM-kills them into CrashLoopBackOff with kubelet restart after an
+  escalating backoff, cascading as survivors inherit the load. Those phase
+  flips are the only committed-state writes outside ops, funneled through
+  `useOpLifecycle`'s `commit(mutator)` (crashes defer while an op is
+  mid-walk; restarts always commit, phase-guarded); all overload
+  bookkeeping stays in refs inside `useTraffic`, never in cluster state.
+  `services` and `ingresses` live in cluster state; `serviceEndpoints`
+  counts only Running pods. Framer Motion drives stage animations;
+  `PodChip` is `forwardRef` because `AnimatePresence popLayout` measures
+  exiting children.

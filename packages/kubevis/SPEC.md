@@ -137,17 +137,36 @@ Ingress objects and programs the route. Deleting the Service (503) or the
 Ingress (404) breaks a different link — the rail shows which.
 
 ### The traffic rail (ambient, outside the op machinery)
-A synthetic user fires one request every 5 seconds, always on (pausable).
-The rail is grid-aligned over the WORKER columns only — user traffic is the
-data plane and must never appear to pass through the control plane; the
-column above the control-plane card holds a note saying exactly that. Each
-tick traces routeRequest against the currently RENDERED cluster: ingress
-rule → Service → ready endpoint (round-robin), so traffic reacts live to
-mid-op states, scrubbing, drains, and crashes. Failures die at the first
-missing hop: no rule → 404 at the controller; missing Service or zero ready
-endpoints → 503. The rail shows the user (✓/✗ ticker + counters), the
-ingress controller (its rules), and one chip per Service with a live
-endpoint count.
+A synthetic user fires requests at a slider-controlled rate (discrete steps
+0–100 r/s; 0 = paused; default 0.2). The rail is a vertical data-plane stack
+in the grid column above the control-plane card — slider, user (ticker or
+live ok/s / fail/s rates + counters), ingress controller (its rules), one
+chip per Service with a live endpoint count — and the chips/beams fly from
+the stack across the empty rail columns to the worker columns, never through
+the control plane. Each 250ms tick accumulates fractional requests
+(rps × dt) and traces routeRequest against the currently RENDERED cluster:
+ingress rule → Service → ready endpoint (round-robin), so traffic reacts
+live to mid-op states, scrubbing, drains, and crashes. Failures die at the
+first missing hop: no rule → 404 at the controller; missing Service or zero
+ready endpoints → 503. At rps ≤ 1 each request flies as an individual chip;
+above that the layer switches to aggregate flow beams (width/speed scale
+with the rate, failed hops red with the status code) plus a live `r/s`
+badge on every serving pod.
+
+**Capacity & overload cascade**: each pod serves up to POD_CAPACITY_RPS
+(20 r/s); round-robin means per-pod load = serviceRPS / readyEndpoints. A pod
+sustained over capacity (3s grace + per-pod jitter) is OOM-killed into
+CrashLoopBackOff (Warning/OOMKilled + BackOff events); because endpoints
+exclude non-Running pods, the survivors inherit its share — one overload
+cascades into total collapse (all pods down → 503s at the service hop). The
+kubelet retries each crashed pod after an escalating backoff (5s doubling to
+20s; a healthy stretch resets it), so lowering the slider — or scaling the
+deployment up (6 × 20 = 120 r/s absorbs the max) — lets the service recover
+on its own, restarts intact in `get pods`. These traffic-driven phase flips
+are the ONLY writes outside the op machinery, funneled through
+useOpLifecycle's `commit`; new crashes are deferred while an op is mid-walk
+(the pressure persists and lands after opDone), while restarts always
+commit, guarded on the pod's current phase.
 
 ### upgrade node (scenario, 4 steps; requires a drained node)
 The part kubectl cannot do: the kubelet is upgraded ON the machine. The node
@@ -247,7 +266,10 @@ Documented so reviewers can verify the teaching stays honest:
   randomness); Endpoints-controller latency is instant; a single Ingress
   rule is honored (the first); readiness == phase Running (no probes);
   synthetic traffic evaluates the rendered (derived) cluster, so it reacts
-  to scrubbing.
+  to scrubbing. The 20 r/s pod capacity is a stylized stand-in: real pods
+  don't have a universal RPS limit — overload shows up as latency/5xx and
+  kills indirectly (OOM as queues grow, liveness-probe timeouts) — but the
+  OOM-kill → CrashLoopBackOff → cascade mechanics it drives are real.
 - `kubectl scale` to the current count prints an explanation instead of a
   no-op walkthrough.
 
