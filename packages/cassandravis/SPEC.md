@@ -194,8 +194,13 @@ Documented so reviewers can verify the teaching stays honest:
 - Merkle trees are 2 levels over a handful of key buckets.
 - Gossip/failure detection converges in a single step; phi-accrual reduced to
   "heartbeats stopped".
-- Coordinator fixed to node-1; no partitioner/snitch/rack/DC config; no
-  commit-log replay on restart (a recovered node relies on hints/repair in
-  the sim).
+- Coordinator fixed to node-1; no partitioner/snitch/rack/DC config.
+- Commit-log replay on restart is modeled as the memtable simply surviving
+  the crash (the net effect is identical); a recovered node relies on
+  hints/repair only for the writes it missed while down.
+- A request whose CL is already infeasible (too few replicas up) still
+  animates the attempt so the stepper has something to show; real Cassandra
+  fails fast with Unavailable — writing nothing and storing no hints — and
+  the failure blurbs say so (the shown behavior matches a TIMEOUT failure).
 - Hint replay is instant and complete on recovery (real: throttled, and hints
   expire after a window, e.g. 3h).

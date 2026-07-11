@@ -39,7 +39,7 @@ const recoverSteps = (p) => {
       ms: 2600,
       title: '1 · The node comes back',
       blurb:
-        'The machine reboots and rejoins gossip; its heartbeat counter starts advancing again and peers mark it UP. Its SSTables survived on disk — but its memtable died with the process, and it missed every write while it was gone.',
+        'The machine reboots and rejoins gossip; its heartbeat counter starts advancing again and peers mark it UP. Its SSTables survived on disk, and although its in-memory memtable died with the process, the commit log replays into a fresh one on startup — nothing local is lost (we show the net effect). What the log can NOT give it is the writes it MISSED while it was gone.',
     },
   ]
   if (p.replays.length > 0) {
@@ -80,8 +80,13 @@ export const nodeCrash = {
 
   extra(cluster, op) {
     const p = op.payload
-    if (op.step === 1) return { focus: Object.keys(cluster.nodes).filter((n) => n !== p.node), flights: [] }
-    return { focus: [p.node], flights: [] }
+    // While the narration is still "gone silent / gossip noticing" (steps 0-1),
+    // the cluster hasn't converged on DOWN yet — the card renders as silent,
+    // not banner-DOWN, so the UI doesn't spoil the gossip story.
+    const crash = { node: p.node, silent: op.step < 2 }
+    if (op.step === 1)
+      return { focus: Object.keys(cluster.nodes).filter((n) => n !== p.node), flights: [], crash }
+    return { focus: [p.node], flights: [], crash }
   },
 }
 

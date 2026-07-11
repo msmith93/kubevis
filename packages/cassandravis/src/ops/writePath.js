@@ -59,7 +59,7 @@ export function makeWriteSteps(verb) {
       title: `${steps.length + 1} · Count acks: ${p.acks} of ${p.w} needed (${w})`,
       blurb: p.ok
         ? `${p.acks} live replica${p.acks === 1 ? '' : 's'} acknowledged — that meets W=${p.w} (${w}), so the coordinator acks the client. Replication to any remaining replicas continues in the background; the client never waits for all ${N_REPLICAS} unless it asked for ALL.`
-        : `Only ${p.acks} live replica${p.acks === 1 ? '' : 's'} could acknowledge — fewer than W=${p.w} (${w}), so the write FAILS back to the client. But note: there is no rollback. The replicas that did accept it keep it, and the hint remains. A later read may still see this "failed" write.`,
+        : `Only ${p.acks} live replica${p.acks === 1 ? '' : 's'} could acknowledge — fewer than W=${p.w} (${w}), so the write FAILS back to the client. (Real Cassandra, already knowing via gossip that too few replicas are up, would fail fast with Unavailable before writing anything or storing a hint; what you see here is how a write that fails mid-flight by TIMEOUT behaves.) Either way the key lesson holds: there is no rollback. Replicas that did accept it keep it, and a later read may still see this "failed" write.`,
     })
     return steps
   }

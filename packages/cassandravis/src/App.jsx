@@ -267,8 +267,11 @@ export default function App() {
   }
 
   // Seed a lived-in cluster directly: flushed SSTables, newer memtable
-  // versions, and one deliberately stale replica (cart:7 on node-3 missed the
-  // t5 write) so get-with-read-repair and repair have something to show.
+  // versions, and one deliberately stale replica: cart:7 on node-1 missed the
+  // t5 write. node-1 is FIRST in cart:7's walk order and reads contact the
+  // first R live replicas, so a ONE read returns the stale value, a QUORUM
+  // read triggers read repair, and anti-entropy repair sees the divergence —
+  // and it shows the coordinator being a replica of the key it coordinates.
   function loadSampleData() {
     if (tour.step?.id !== 'welcome') tour.abort()
     const c = initialCluster()
@@ -298,7 +301,7 @@ export default function App() {
     seed('cart:7', '2 items', 1, { where: 'sst' }) // t2, flushed everywhere
     seed('video:9', '41 views', 2, { where: 'sst' }) // t3, flushed everywhere
     seed('user:1', 'bob', 3, {}) // t4, in memtables
-    seed('cart:7', '3 items', 1, { skip: 'node-3' }) // t5 — node-3 is STALE
+    seed('cart:7', '3 items', 1, { skip: 'node-1' }) // t5 — node-1 is STALE
     seed('video:9', '42 views', 2, {}) // t6, newer version shadows t3
     clock.current = ts
     resetTo(c)

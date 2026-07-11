@@ -13,6 +13,10 @@ export default function ClusterStage({ cluster, extra, op, onInspect }) {
   const inspectable =
     op?.type === 'get' && op.step >= 3 ? new Set(op.payload.contacted) : new Set()
 
+  // Mid-crash, before the cluster has "converged on DOWN", the crashed node is
+  // merely silent — no DOWN banner yet.
+  const silentNode = extra.crash?.silent ? extra.crash.node : null
+
   return (
     <div className="cluster">
       <div className="client-row">
@@ -30,6 +34,7 @@ export default function ClusterStage({ cluster, extra, op, onInspect }) {
             node={node}
             keys={cluster.keys}
             active={focus.has(node.id)}
+            silent={silentNode === node.id}
             inspectable={inspectable.has(node.id)}
             compactSelecting={extra.compact?.selecting && extra.compact.targets.includes(node.id)}
             onInspect={onInspect}
@@ -40,17 +45,24 @@ export default function ClusterStage({ cluster, extra, op, onInspect }) {
   )
 }
 
-function NodeCard({ node, keys, active, inspectable, compactSelecting, onInspect }) {
+function NodeCard({ node, keys, active, silent, inspectable, compactSelecting, onInspect }) {
   const memEntries = Object.entries(node.memtable)
   return (
     <div
       data-fly={node.id}
       className={
-        'node-card' + (active ? ' active' : '') + (node.up ? '' : ' down')
+        'node-card' +
+        (active ? ' active' : '') +
+        (node.up ? '' : silent ? ' silent' : ' down')
       }
       style={{ '--node-accent': NODE_COLORS[node.id] }}
     >
-      {!node.up && <div className="down-banner">✕ DOWN — unreachable</div>}
+      {!node.up &&
+        (silent ? (
+          <div className="silent-banner">⋯ heartbeats stopped</div>
+        ) : (
+          <div className="down-banner">✕ DOWN — unreachable</div>
+        ))}
       <div className="node-head">
         <span className="node-dot" style={{ background: NODE_COLORS[node.id] }} />
         <span className="node-name">{node.id}</span>

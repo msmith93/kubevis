@@ -46,7 +46,7 @@ function makeSteps(p) {
       title: `4 · Query ${p.r} replica${p.r === 1 ? '' : 's'} (R=${p.r})`,
       blurb: p.ok
         ? `The coordinator queries ${p.contacted.join(', ')}. Each runs its LOCAL read path: check the memtable first, then SSTables newest-first — consulting each SSTable's bloom filter to skip tables that can't contain the key. (Real Cassandra sends one full data read plus digest reads; we show full reads.)`
-        : `The coordinator needs ${p.r} replicas for ${r}, but only ${p.contacted.length} ${p.contacted.length === 1 ? 'is' : 'are'} up${p.contacted.length ? ` (${p.contacted.join(', ')})` : ''}. It cannot meet the consistency level.`,
+        : `The coordinator needs ${p.r} replicas for ${r}, but only ${p.contacted.length} ${p.contacted.length === 1 ? 'is' : 'are'} up${p.contacted.length ? ` (${p.contacted.join(', ')})` : ''}. It cannot meet the consistency level. (Real Cassandra knows this from gossip and fails fast with Unavailable, without querying anyone; we animate the attempt so you can see what's missing.)`,
     },
     {
       key: 'resolve',

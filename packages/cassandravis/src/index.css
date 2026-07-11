@@ -1709,6 +1709,25 @@ table.ii td.term {
   padding: 2px 8px;
   z-index: 2;
 }
+/* mid-crash, before gossip converges on DOWN: the node is merely silent */
+.node-card.silent {
+  opacity: 0.55;
+}
+.silent-banner {
+  position: absolute;
+  top: -1px;
+  right: 10px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px dashed var(--muted);
+  border-top: none;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border-radius: 0 0 6px 6px;
+  padding: 2px 8px;
+  z-index: 2;
+}
 .node-card .node-head {
   display: flex;
   align-items: center;
@@ -1967,6 +1986,18 @@ table.ii td.term {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+}
+/* the per-node root row above the leaves */
+.merkle-row.merkle-roots {
+  border-style: dashed;
+  margin-bottom: 9px;
+}
+.merkle-root-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
 }
 .merkle-hash {
   display: inline-flex;

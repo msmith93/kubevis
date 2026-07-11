@@ -36,7 +36,7 @@ const makeSteps = (p) => {
       ms: 2200, // overridden by duration() (streaming flights)
       title: '3 · Stream the differences',
       blurb:
-        'The replicas exchange just the divergent entries; each side keeps the newer timestamp (last-write-wins, same rule as reads). Stale copies catch up, missing copies appear.',
+        'The replicas exchange just the divergent entries; each side keeps the newer timestamp (last-write-wins, same rule as reads). Stale copies catch up, missing copies appear. (We apply them through the write path; real repair streams SSTable data directly.)',
     })
     steps.push({
       key: 'synced',
