@@ -5,7 +5,7 @@ const copyKey = (shard, role) => `${shard}:${role}`
 
 // The centre stage: a coordinator/request bar on top, then the 3-node cluster.
 // Highlights and badges are driven by the current operation + step.
-export default function ClusterStage({ cluster, extra, op, onZoom }) {
+export default function ClusterStage({ cluster, extra, op, onZoom, onCoordZoom }) {
   const type = op?.type
   const step = op?.step ?? -1
   const inflight = extra.inflight
@@ -75,6 +75,19 @@ export default function ClusterStage({ cluster, extra, op, onZoom }) {
               {node.id === COORDINATOR && (
                 <span className="badge-coord">coordinator</span>
               )}
+              {node.id === COORDINATOR &&
+                type === 'search' &&
+                (step === 3 || step === 4) &&
+                search?.merged.length > 0 && (
+                  <button
+                    className="magnify-btn coord"
+                    data-tour="coord-magnify"
+                    title="Zoom into the coordinator's merge & fetch"
+                    onClick={() => onCoordZoom?.()}
+                  >
+                    🔍
+                  </button>
+                )}
             </div>
 
             {shardsOnNode(node.id).map(({ shard, role }) => {

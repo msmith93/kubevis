@@ -15,6 +15,7 @@ import InvertedIndexTable from './components/InvertedIndexTable'
 import SearchFlight from './components/SearchFlight'
 import SearchResultsPanel from './components/SearchResultsPanel'
 import ShardInspector from './components/ShardInspector'
+import CoordinatorInspector from './components/CoordinatorInspector'
 import Stepper from './components/Stepper'
 import CookieBanner from './components/CookieBanner'
 import Walkthrough from './components/Walkthrough'
@@ -54,6 +55,7 @@ export default function App() {
 
   const [indexPhase, setIndexPhase] = useState('closed') // overlay choreography phase
   const [zoomShard, setZoomShard] = useState(null) // shard id being inspected, or null
+  const [coordZoom, setCoordZoom] = useState(false) // coordinator inspector open?
   const [zoomOrigin, setZoomOrigin] = useState('50% 50%') // transform-origin of the dive
 
   const [title, setTitle] = useState(PRESETS[0].title)
@@ -83,6 +85,7 @@ export default function App() {
       playing,
       opDone,
       zoomShard,
+      coordZoom,
       sampleLoaded,
     },
     { pause },
@@ -95,6 +98,13 @@ export default function App() {
   useEffect(() => {
     if (!inLocalPhase) setZoomShard(null)
   }, [inLocalPhase])
+
+  // Same guard for the coordinator's glass, which lives on the gather + fetch
+  // phases only.
+  const inGatherPhase = op?.type === 'search' && (op.step === 3 || op.step === 4)
+  useEffect(() => {
+    if (!inGatherPhase) setCoordZoom(false)
+  }, [inGatherPhase])
 
   // Initialize analytics with GDPR compliance. In GDPR regions we wait for
   // consent (cookie banner); elsewhere we load GA4 immediately. Analytics is
@@ -169,6 +179,21 @@ export default function App() {
     setZoomShard(id)
   }
   const closeZoom = () => setZoomShard(null)
+
+  // Coordinator variant of openZoom: same pause + dive, aimed at the
+  // coordinator's node column instead of a shard card.
+  function openCoordZoom() {
+    pause()
+    const card = selectorRect('[data-coordinator]')
+    const layout = selectorRect('.layout')
+    if (card && layout && layout.width && layout.height) {
+      const ox = ((card.left + card.width / 2 - layout.left) / layout.width) * 100
+      const oy = ((card.top + card.height / 2 - layout.top) / layout.height) * 100
+      setZoomOrigin(`${ox.toFixed(1)}% ${oy.toFixed(1)}%`)
+    }
+    setCoordZoom(true)
+  }
+  const closeCoordZoom = () => setCoordZoom(false)
 
   const hasText = title.trim() || body.trim()
   const canIndex = hasText && canStartNew && !playing
@@ -270,6 +295,7 @@ export default function App() {
     resetTo(c)
     setIndexPhase('closed')
     setZoomShard(null)
+    setCoordZoom(false)
     setSampleLoaded(true)
     docNum.current = SAMPLE_DOCS.length + 1
     segNum.current = seg
@@ -303,7 +329,7 @@ export default function App() {
         className="layout"
         style={{ transformOrigin: zoomOrigin }}
         animate={
-          zoomShard != null
+          zoomShard != null || coordZoom
             ? { scale: 1.7, opacity: 0 }
             : { scale: 1, opacity: 1 }
         }
@@ -410,7 +436,13 @@ export default function App() {
         {/* ---------------- Center: cluster ---------------- */}
         <div className="col">
           <p className="section-title">Cluster</p>
-          <ClusterStage cluster={derived} extra={extra} op={op} onZoom={openZoom} />
+          <ClusterStage
+            cluster={derived}
+            extra={extra}
+            op={op}
+            onZoom={openZoom}
+            onCoordZoom={openCoordZoom}
+          />
         </div>
 
         {/* ---------------- Right: explain + inspector ---------------- */}
@@ -487,6 +519,16 @@ export default function App() {
         highlightClose={tour.status === 'running'}
       />
 
+      {/* ---------------- Overlay: zoom into the coordinator's merge & fetch ---------------- */}
+      <CoordinatorInspector
+        open={coordZoom}
+        search={extra.search}
+        docs={derived.docs}
+        query={op?.type === 'search' ? op.payload.query : ''}
+        onClose={closeCoordZoom}
+        highlightClose={tour.status === 'running'}
+      />
+
       {/* ---------------- Cookie consent (GDPR regions only) ---------------- */}
       {showCookieBanner && (
         <CookieBanner
@@ -496,7 +538,7 @@ export default function App() {
       )}
 
       {/* ---------------- Overlay: first-run guided tour ---------------- */}
-      <Walkthrough tour={tour} allowEscape={zoomShard == null} />
+      <Walkthrough tour={tour} allowEscape={zoomShard == null && !coordZoom} />
     </div>
   )
 }

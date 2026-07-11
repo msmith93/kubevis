@@ -172,6 +172,66 @@ export const LOCAL_SEARCH_STEPS = [
   },
 ]
 
+// The coordinator close-up walks these steps to show how the coordinator turns
+// the shards' local hits into the fetch decision and the final response. Like
+// LOCAL_SEARCH_STEPS they are independent of the global op (which stays frozen
+// on the search `gather` or `fetch` step while the inspector is open).
+export const COORD_MERGE_STEPS = [
+  {
+    key: 'arrive',
+    title: '1 · Hits arrive from every shard',
+    blurb:
+      'Each contacted shard reports its local top hits — doc ids + scores only, never the full documents. The coordinator now holds one small list per shard.',
+  },
+  {
+    key: 'merge',
+    title: '2 · Merge into one list',
+    blurb:
+      'The per-shard lists are concatenated into a single candidate list. Each hit remembers which shard it came from — the coordinator will need that address later.',
+  },
+  {
+    key: 'sort',
+    title: '3 · Sort by score',
+    blurb:
+      'The merged list is sorted by score (ties broken by doc id) to produce the GLOBAL ranking. A shard’s local #1 can lose to another shard’s #2 here.',
+  },
+  {
+    key: 'cut',
+    title: '4 · Cut to the winners',
+    blurb:
+      'Only the requested window of top results survives (the from + size of the query). Everything below the cut is ranked out — those documents are never fetched, which is the whole point of query-then-fetch.',
+  },
+  {
+    key: 'group',
+    title: '5 · Group winners by shard',
+    blurb:
+      'The winners are grouped by the shard that holds them, becoming one GET _source request per shard. Only shards that own a winner get a fetch request at all.',
+  },
+  {
+    key: 'fetch',
+    title: '6 · Fetch _source & respond',
+    blurb:
+      'The shards return the full _source for just the winning ids. The coordinator slots the documents into the ranked order and returns the response to the client.',
+  },
+]
+
+// The coordinator's gather→fetch decision, as data for the coordinator
+// inspector. A thin pure projection of computeSearch's output; winners/byShard
+// use the same slice + grouping as SearchFlight's fetch step so the close-up
+// always agrees with the main stage.
+export function computeCoordinatorMerge(search, n = MAX_FETCH_WINNERS) {
+  const arrivals = Object.entries(search.perShard).map(([sid, hits]) => ({
+    shard: Number(sid),
+    ...search.serving[sid],
+    hits,
+  }))
+  const winners = search.merged.slice(0, n)
+  const cut = search.merged.slice(n)
+  const byShard = {}
+  for (const w of winners) (byShard[w.shard] ||= []).push(w)
+  return { arrivals, merged: search.merged, winners, cut, byShard, n }
+}
+
 // The shard-local query phase, as data for the inspector's stepped close-up. Pure
 // like computeSearch, and uses the SAME term-frequency scoring so the numbers here
 // match the cluster-level results panel.

@@ -4,7 +4,7 @@
 // manually. `waitFor` gates VISIBILITY only: while false the tour renders
 // nothing, which is how it waits out op animations and lets the app's own
 // "What's happening" panel narrate. Predicates read the snapshot App builds:
-// { indexPhase, opType, opStep, playing, opDone, zoomShard }.
+// { indexPhase, opType, opStep, playing, opDone, zoomShard, coordZoom }.
 export const TOUR_STEPS = [
   {
     id: 'welcome',
@@ -12,7 +12,7 @@ export const TOUR_STEPS = [
     title: 'Welcome to the OpenSearch Cluster Visualizer',
     body: [
       'This app shows how OpenSearch (and Lucene under the hood) indexes documents and searches them across a distributed cluster — all simulated right here in your browser.',
-      'One tip before you start: wherever you see the 🔍 magnifying glass, you can click it to zoom into a much more granular view of what a shard is doing.',
+      'One tip before you start: wherever you see the 🔍 magnifying glass, you can click it to zoom into a much more granular view of what a shard — or the coordinator — is doing.',
       'Take the one-minute tour? You will index your first document and run your first search.',
     ],
     cta: 'Start the tour',
@@ -79,14 +79,39 @@ export const TOUR_STEPS = [
     id: 'stepper',
     target: '[data-tour="stepper-play"]',
     placement: 'top',
-    title: 'Run the search to the end',
-    body: 'The search is still paused mid-flight. Press ▶ Play right here to let it run to the end — watch it gather every shard’s hits, merge and sort them, fetch the winning documents, and return the ranked results.',
+    title: 'Resume the search',
+    body: 'The search is still paused mid-flight. Press ▶ Play right here to resume it — watch every shard’s hits (ids + scores, not documents) fly back to the coordinator.',
     // Spotlights the footer ▶ Play button directly so the tooltip sits right next
     // to it. Hidden while the shard inspector is open so it never covers the
-    // close-up. Advances only once the search animation reaches its final step,
-    // so the tour can't end with the scatter-gather still frozen. "Skip tour" in
-    // the tooltip is the escape hatch for anyone who wants out early.
+    // close-up. The opStep escape hatch covers a user who scrubs forward with
+    // Next instead of pressing Play.
     waitFor: (s) => s.zoomShard == null,
+    advanceOn: (s) => s.playing || (s.opType === 'search' && s.opStep >= 3),
+  },
+  {
+    id: 'coord-magnify',
+    target: '[data-tour="coord-magnify"]',
+    placement: 'bottom',
+    title: 'Zoom into the coordinator',
+    // Same pattern as the shard magnifier: pause so the transient 🔍 stays
+    // mounted while the user reads; the advanceOn escape hatch covers a user
+    // who presses ▶ Play instead of clicking it.
+    waitFor: (s) => s.opType === 'search' && s.opStep === 3 && s.zoomShard == null,
+    onShow: (s, actions) => actions.pause(),
+    body: 'Every shard has now reported its top hits — ids and scores only. Click the 🔍 on the coordinator to watch it merge the lists, rank them globally, and decide which full documents to fetch from which shards.',
+    advanceOn: (s) => s.coordZoom || (s.opDone && !s.playing),
+  },
+  {
+    id: 'stepper-finish',
+    target: '[data-tour="stepper-play"]',
+    placement: 'top',
+    title: 'Run the search to the end',
+    body: 'Press ▶ Play once more to let the search run to the end — watch the coordinator fetch the winning documents from their shards and return the ranked results.',
+    // Hidden while either inspector is open. Advances only once the search
+    // animation reaches its final step, so the tour can't end with the
+    // scatter-gather still frozen. "Skip tour" in the tooltip is the escape
+    // hatch for anyone who wants out early.
+    waitFor: (s) => s.zoomShard == null && !s.coordZoom,
     advanceOn: (s) => s.opType === 'search' && s.opDone && !s.playing,
   },
   {
@@ -95,11 +120,12 @@ export const TOUR_STEPS = [
     title: 'That’s the loop!',
     body: [
       'You indexed a document, made it searchable with a refresh, loaded a fuller sample dataset, and ran a scatter-gather search to completion — and you can replay any operation from the footer.',
-      'Remember: the 🔍 appears whenever a shard is serving a search — click it any time for the granular view. Try Flush, Merge, and deleting documents next.',
+      'Remember the two 🔍 magnifiers: one on each serving shard during the local search, and one on the coordinator while it gathers and fetches — click either any time for the granular view. Try Flush, Merge, and deleting documents next.',
     ],
     // Belt-and-suspenders: never surface the end card until the search animation
-    // has fully completed (and the inspector is closed).
-    waitFor: (s) => s.zoomShard == null && s.opType === 'search' && s.opDone,
+    // has fully completed (and both inspectors are closed).
+    waitFor: (s) =>
+      s.zoomShard == null && !s.coordZoom && s.opType === 'search' && s.opDone,
     cta: 'Done',
   },
 ]
